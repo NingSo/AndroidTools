@@ -1,0 +1,37 @@
+language: android
+sudo: required
+dist: trusty
+jdk:
+    - oraclejdk8
+env:
+    matrix:
+        - ISLOCAL=false
+    global:
+        - ANDROID_NDK_HOME=$ANDROID_SDK_HOME/ndk-bundle
+addons:
+    apt_packages:
+        - npm
+notifications: # 每次构建的时候是否通知，如果不想收到通知邮箱就设置false吧
+  email: true
+before_cache:
+    - rm -rf $HOME/.gradle/caches
+    - rm -rf $HOME/.android/build-cache
+cache:
+    directories:
+        - $HOME/.gradle/wrapper/
+android:
+    components:
+        - tools
+        - build-tools-28.0.1
+        - tools
+        - android-28
+        - extra-google-m2repository      # google Support Repository
+        - extra-android-m2repository     # Android Support Repository
+        - extra-android-support          # Support Library
+before-script:
+    $ANDROID_HOME/tools/bin/sdkmanager ndk-bundle
+script: ./gradlew -Dorg.gradle.jvmargs=-Xmx4196M -q lintRelease
+after_failure:
+    - sudo npm install --global surge
+    - surge --project ./app/build/reports/ --domain kika-${TRAVIS_JOB_NUMBER//\./-}.surge.sh
+    - echo "failure"
